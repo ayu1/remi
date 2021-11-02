@@ -593,7 +593,7 @@ remi <- function(dat.list,
                  #downstreamgenes=NULL,
                  ppi.net = NULL,
                  cd = "Louvain",
-                 maxNum = NULL) {
+                 maxNum = ncol(cellexp.list$filtered[[1]])) {
 
   if(is.null(lr.database)) {lr.database = curr.lr.filt}
   #if(is.null(downstreamgenes)) {downstreamgenes = pathway.genelist}

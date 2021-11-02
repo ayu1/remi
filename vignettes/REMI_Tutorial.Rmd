@@ -46,10 +46,7 @@ celltypes <- c("I", "E", "F", "M")
 cellexp.list <- setupData(dat, celltypes, 4, filter=T)
 
 # RUNNING REMI
-adeno.remi <- remi(cellexp.list, 
-                   cd="Louvain",
-                   maxNum = ncol(cellexp.list$filtered$I))
-
+adeno.remi <- remi(cellexp.list)
 ```
 
 

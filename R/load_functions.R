@@ -112,14 +112,10 @@ setupData <- function(dat, cellmarkers, filter=T, var = 3) {
 #'
 expandLRpairs <- function(lr.table, datlist, celltypes) {
 
-  View(lr.table)
-  View(celltypes)
-
   # Creating vectors of cell type-specific ligand, receptor, and pathway genes
   all.rs <- c()
   all.ls <- c()
   for(i in celltypes) {
-    print(i)
     all.rs <- c(all.rs, unique(paste0(i, "_", lr.table$Receptor)))
     all.ls <- c(all.ls, unique(paste0(i, "_", lr.table$Ligand)))
   }
@@ -907,7 +903,7 @@ calculateSignificance <- function(obj,
 setupSingleCell <- function(obj,
                             sample.col,
                             celltype.col,
-                            keep.markers = NULL,
+                            use.celltypes = NULL,
                             remove.markers = NULL,
                             gene.select = NULL,
                             assay="integrated",
@@ -915,8 +911,8 @@ setupSingleCell <- function(obj,
                             thres=0,
                             expthres = 0.1) {
 
-  if(is.null(keep.markers)) {
-    keep.markers <- unique(obj@meta.data[,celltype.col])
+  if(is.null(use.celltypes)) {
+    use.celltypes <- unique(obj@meta.data[,celltype.col])
   }
 
   cat("Calculating percent expressed for ligand and receptor genes\n")
@@ -939,7 +935,7 @@ setupSingleCell <- function(obj,
   pseudobulk <- SingleToBulk(obj, assay, sample.col, celltype.col)
 
   #num.markers <- length(pseudobulk$cellmarkers) - length(remove.markers)
-  num.markers <- length(keep.markers)
+  num.markers <- length(use.celltypes)
 
   cat("Number of markers\t", num.markers, "\n")
 
@@ -950,12 +946,10 @@ setupSingleCell <- function(obj,
 
   for(i in 1:length(pseudobulk$cellmarkers)) {
 
-    print(i)
-
     curr.name <- pseudobulk$cellmarkers[i]
 
     #if(!(curr.name %in% remove.markers)) {
-    if(curr.name %in% keep.markers) {
+    if(curr.name %in% use.celltypes) {
 
       nospace.name <- as.character(gsub(" ", "", curr.name))
       nospace.name <- gsub("+", "\\+", nospace.name, fixed=TRUE)
@@ -965,8 +959,6 @@ setupSingleCell <- function(obj,
       all.cols <- gsub(" ", "", all.cols)
 
       cell.cols <- grep(paste0("^\\b", nospace.name, "\\b$"), all.cols)
-
-      print(cell.cols)
 
       celltype.filt <- pseudobulk$dat[,cell.cols]
 
@@ -995,8 +987,6 @@ setupSingleCell <- function(obj,
       colnames(cleaned.filt) <- dat.cols
 
       cleaned.filt <- cleaned.filt[which(rownames(cleaned.filt) %in% percexp$cell_gene),]
-
-      print(dim(cleaned.filt))
 
       if(is.null(gene.select)) {
         filtered.cellexps[[curr.name]] <- cleaned.filt

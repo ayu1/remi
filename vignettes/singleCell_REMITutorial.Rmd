@@ -9,7 +9,12 @@ vignette: >
 ---
 
 ```{r}
-library(remi)
+source("../R/load_functions.R")
+source("../R/load_subfunctions.R")
+load("../data/curr.lr.filt.rda")
+load("../data/g.biogrid.rda")
+load("../data/pathway.genelist.rda")
+load("../data/pathway.genes.rda")
 ```
 
 Download data from: https://figshare.com/s/871cb53e8fb5206bf8d0
@@ -24,11 +29,6 @@ seurat.obj <- readRDS("~/Downloads/laughneytumor_forREMI.rds")
 ## Constructing a REMI network on subset of Laughney et al's single-cell RNA-sequencing dataset
 - Current run time ~ 20 minutes, working on speeding up the run time
 ```{r}
-#Cell types with few cells
-remove.celltypes <- c("MICROGLIA/MACROPHAGE", 
-                      "NEUTROPHIL", 
-                      "DENDRITIC (ACTIVATED)", 
-                      "IG")
 #Set sample.col as column listing sample IDs
 #Set celltype.col as column listing cell type category of interest
 # Filter = TRUE removes low expressed ligand and receptors from analysis
@@ -39,11 +39,11 @@ data.obj <- setupSingleCell(seurat.obj,
                           celltype.col = "CELL_TYPE",
                           filter=T,
                           assay="integrated",
-                          remove.markers = remove.celltypes,
-                          thres=0.5,
-                          expthres = 0.25)
+                          use.celltypes = c("EPITHELIAL", "FIBROBLAST"),
+                          expthres = 0.2)
+
 # Run REMI using default parameters
-remi.obj <- remi(data.obj$cellmarkers, data.obj)
+remi.obj <- remi(data.obj)
 ```
 
 Viewing REMI network

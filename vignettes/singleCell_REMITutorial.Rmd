@@ -34,6 +34,7 @@ seurat.obj <- readRDS("~/Downloads/laughneytumor_forREMI.rds")
 # Filter = TRUE removes low expressed ligand and receptors from analysis
 # Threshold = expression level cut-off
 # Expthres = percent expressed per cell type cut-off
+
 data.obj <- setupSingleCell(seurat.obj, 
                           sample.col = "Sample.ID",
                           celltype.col = "CELL_TYPE",

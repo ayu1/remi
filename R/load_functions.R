@@ -137,18 +137,18 @@ expandLRpairs <- function(lr.table, datlist, celltypes) {
   second.ind <- seq(from=2, by=2, length.out = nrow(allcombolr))
 
   lr.network.pairs <- data.table::data.table(allcombolr) %>%
-    dplyr::rename(L = Var1) %>%
+     dplyr::rename(L = Var1) %>%
     dplyr::rename(R = Var2) %>%
     dplyr::mutate(n1cell = unlist(strsplit(L, split="_"))[first.ind]) %>%
     dplyr::mutate(n2cell = unlist(strsplit(R, split="_"))[first.ind]) %>%
     dplyr::mutate(ligand = unlist(strsplit(L, split="_"))[second.ind]) %>%
-    dplyr::mutate(receptor = unlist(strsplit(R, split="_"))[second.ind]) %>%
+    dplyr::mutate(receptor = unlist(strsplit(R, split="_"))[second.ind]) #%>%
     dplyr::mutate(pairname = paste0(ligand, "_", receptor)) %>%
     dplyr::filter(pairname %in% lr.table$Pair.Name) %>%
     dplyr::mutate(combo1 = paste0(L, "_", R)) %>%
-    dplyr::mutate(combo2 = paste0(R, "_", L)) %>%
-    dplyr::filter(L %in% all.genes) %>%
-    dplyr::filter(R %in% all.genes)
+    dplyr::mutate(combo2 = paste0(R, "_", L)) #%>%
+  #  dplyr::filter(L %in% all.genes) %>%
+  #  dplyr::filter(R %in% all.genes)
 
   if(nrow(lr.network.pairs) == 0) {
     cat("No ligand and receptor pairs in dataset. Try relaxing the gene expression cutoff\n")
@@ -754,7 +754,7 @@ calculateSignificance <- function(obj,
                                   r.chosen,
                                   comm.chosen,
                                   maxNum,
-                                  iterNum = 1000,
+                                  iterNum = 100,
                                   seednum=30,
                                   lambda = NULL) {
 

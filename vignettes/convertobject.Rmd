@@ -1,0 +1,34 @@
+---
+title: "convertobject.Rmd"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(Seurat); library(SeuratDisk)
+```
+
+```{r}
+region.freq <- read.csv("/Users/ayu1/Downloads/region_celltype_freq_matrix.csv",
+                        row.names=1)
+```
+
+# Add metadata for region frequencies
+```{r}
+region.meta <- read.csv("/Users/ayu1/Downloads/viralbidtmaregion.csv", row.names=2)
+rownames(region.meta) <- gsub("_", "", rownames(region.meta))
+
+region.freq.meta <- region.meta[colnames(region.freq),]
+```
+
+```{r}
+region.obj <- CreateSeuratObject(counts = region.freq)
+region.obj <- AddMetaData(region.obj, metadata=region.freq.meta)
+```
+
+```{r}
+SaveH5Seurat(region.obj, "/Users/ayu1/Desktop/region.h5Seurat", overwrite = FALSE, verbose = TRUE)
+```
+
+```{r}
+Convert("/Users/ayu1/Desktop/region.h5Seurat", dest="h5ad")
+```

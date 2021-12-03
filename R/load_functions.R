@@ -559,7 +559,7 @@ cleaningOutput <- function(input, netlist) {
     dplyr::filter(abs(as.numeric(weight)) > 0) %>%
     dplyr::select(ligand, receptor,
                   n1cell, n2cell,
-                  weight, cor, commnum) %>%
+                  weight, cor, commnum, lambda) %>%
     dplyr::rename(sending = n1cell) %>%
     dplyr::rename(receiving = n2cell)
 
@@ -633,11 +633,6 @@ remi <- function(dat.list,
               params=params))
 
 }
-
-
-
-
-
 
 #' Making chord diagram for REMI results
 #'
@@ -742,7 +737,7 @@ REMIPlot <- function(interactome,
 #' @param obj REMI object
 #' @param l.chosen Ligand in edge
 #' @param r.chosen Receptor in edge
-#' @param comm.chosen Community that edge is present in
+#' @param community.num Community that edge is present in
 #' @param iterNum = Number of permutations for p-value calculation
 #' @param seednum = Seed
 #' @param lambda = Manually setting lambda if of interest
@@ -752,7 +747,7 @@ REMIPlot <- function(interactome,
 calculateSignificance <- function(obj,
                                   l.chosen,
                                   r.chosen,
-                                  comm.chosen,
+                                  community.num,
                                   maxNum,
                                   iterNum = 100,
                                   seednum=30,
@@ -760,27 +755,27 @@ calculateSignificance <- function(obj,
 
   # Setting Varibales
   allcellexp <- obj$lrnet$expanddata
-  node1 <- obj$interactome$node1
-  node2 <- obj$interactome$node2
+  node1 <- obj$interactome$ligand
+  node2 <- obj$interactome$receptor
   commnums <- obj$interactome$commnum
   param <- obj$params
   between <- FALSE
 
   if(is.null(lambda)) {
     opt.lambda <- obj$interactome %>%
-      dplyr::filter(commnum == comm.chosen) %>%
+      dplyr::filter(commnum == community.num) %>%
       dplyr::select(lambda) %>%
       pull() %>% unique()
   } else {
     opt.lambda <- lambda
   }
 
-  if("_" %in% comm.chosen) {
+  if("_" %in% community.num) {
     between = TRUE
   }
 
   # Obtaining community genes
-  comm.num.index <- which(commnums == comm.chosen)
+  comm.num.index <- which(commnums == community.num)
 
   orig.comm.genes <- unique(c(node1[comm.num.index],
                               node2[comm.num.index]))

@@ -17,14 +17,7 @@ install_github("ayu1/remi")
 
 ## Usage
 
-REMI takes in normalized bulk or single-cell RNA-sequencing data as an input, where the columns are samples and rows are genes. The column names are labeled as sample_celltype (i.e. S01_Bcell). The package has a built-in option to filter low-expressed genes, but it can also take it any pre-filtered scaled datasets (filter=F). For single-cell RNA-sequencing data, REMI can be run directly from the Seurat object.
-
-### Tutorials (also available in  `vignettes` directory of the repo):
-
-[Bulk RNA-Seq in R](http://htmlpreview.github.io/?https://github.com/ayu1/remi/blob/master/vignettes/REMI_Tutorial.html)
-
-[Single-cell RNA-Seq data in R](http://htmlpreview.github.io/?https://github.com/ayu1/remi/blob/master/vignettes/singleCell_REMITutorial.html)
-
+Updated version of the method is available on https://github.com/plevritis-lab/remi 
 
 ## Contact
-Email: Alice Yu (ayu1@stanford.edu) or Sylvia Plevritis (sylvia.plevritis@stanford.edu)
+Email: Alice Yu (ayu1@stanford.edu) 

@@ -114,14 +114,14 @@ clusterLabelProp <- function(net, clu, clu.labeled, labelednodes) {
 #' @param communities List of all communities in LR network
 #' @return Clusters identified using louvain combined with all communities
 #'
-clusterLouvain <- function(net, commnums, communities, verbose=T) {
+clusterLouvain <- function(net, commnums, communities) {
   suppressWarnings(
-    if(unique(commnums) == unique(communities)) {
-      if(verbose == T) {cat("\nAll communities are larger than sample size\n")}
-      final.comms <- NA
-    } else {
-      final.comms <- communities[-which(communities %in% commnums)]
-    })
+  if(unique(commnums) == unique(communities)) {
+    cat("\nAll communities are larger than sample size\n")
+    final.comms <- NA
+  } else {
+    final.comms <- communities[-which(communities %in% commnums)]
+  })
   for(cc in commnums) {
     comm.net <- igraph::induced_subgraph(net,names(communities[communities==cc]))
     louvain.comms <- igraph::membership(igraph::cluster_louvain(comm.net))
@@ -335,7 +335,6 @@ null_density = function(r, S, i, j, n) {
   S_0 = 1 * S
   S_0[i,j] = 0
   S_0[j,i] = 0
-
   Theta_0 = solve(S_0)
 
   a = Theta_0[i,j]
@@ -377,7 +376,6 @@ calculatePvalue <- function(R_, S_, D_, i_, j_, n, p) {
 
   twosided_pvalue = 2 * min(onesided_pvalue, 1 - onesided_pvalue)
 
-  return(list(p = twosided_pvalue,
-              w = weights_,
-              w_n = (weights_ * (null_sample > R_[i_, j_]))))
+  return(list(p=twosided_pvalue, w=weights_, w_n=(weights_ * (null_sample > R_[i_, j_]))))
 }
+

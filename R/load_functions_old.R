@@ -19,6 +19,7 @@ require(msigdbr)
 require(dplyr)
 require(Seurat)
 
+
 #' Clean the data
 #'
 #' This function loads a file as a matrix,
@@ -111,9 +112,6 @@ setupData <- function(dat, cellmarkers, filter=T, var = 3) {
 #'
 expandLRpairs <- function(lr.table, datlist, celltypes) {
 
-  # View(lr.table)
-  # View(celltypes)
-
   # Creating vectors of cell type-specific ligand, receptor, and pathway genes
   all.rs <- c()
   all.ls <- c()
@@ -138,21 +136,19 @@ expandLRpairs <- function(lr.table, datlist, celltypes) {
   first.ind <- seq(from=1, by=2, length.out = nrow(allcombolr))
   second.ind <- seq(from=2, by=2, length.out = nrow(allcombolr))
 
-  cat(paste0("\n\tTotal ", dim(allcombolr)[1], " LR Combos to Search\n"))
-
-  lr.network.pairs <- data.frame(allcombolr) %>%
-    dplyr::rename(L = Var1) %>%
+  lr.network.pairs <- data.table::data.table(allcombolr) %>%
+     dplyr::rename(L = Var1) %>%
     dplyr::rename(R = Var2) %>%
     dplyr::mutate(n1cell = unlist(strsplit(L, split="_"))[first.ind]) %>%
     dplyr::mutate(n2cell = unlist(strsplit(R, split="_"))[first.ind]) %>%
     dplyr::mutate(ligand = unlist(strsplit(L, split="_"))[second.ind]) %>%
-    dplyr::mutate(receptor = unlist(strsplit(R, split="_"))[second.ind]) %>%
+    dplyr::mutate(receptor = unlist(strsplit(R, split="_"))[second.ind]) #%>%
     dplyr::mutate(pairname = paste0(ligand, "_", receptor)) %>%
     dplyr::filter(pairname %in% lr.table$Pair.Name) %>%
     dplyr::mutate(combo1 = paste0(L, "_", R)) %>%
-    dplyr::mutate(combo2 = paste0(R, "_", L)) %>%
-    dplyr::filter(L %in% all.genes) %>%
-    dplyr::filter(R %in% all.genes)
+    dplyr::mutate(combo2 = paste0(R, "_", L)) #%>%
+  #  dplyr::filter(L %in% all.genes) %>%
+  #  dplyr::filter(R %in% all.genes)
 
   if(nrow(lr.network.pairs) == 0) {
     cat("No ligand and receptor pairs in dataset. Try relaxing the gene expression cutoff\n")
@@ -335,17 +331,15 @@ pickECgenes <- function(lrnet, dat.list, pgenelist, numgenes, cutoff, ppi, seed=
 #' @export
 #'
 remifiedCommunities <- function(net, dat.list,
-                                seed,
-                                verbose=T,
-                                cd = "Louvain",
-                                maxNum) {
+                                seed, verbose=T,
+                                cd = "Louvain", maxNum) {
   set.seed(seed)
 
   # Final list of communities
   lr.communities <- c()
 
   if(cd == "Louvain") {
-    density.comms <- igraph::membership(igraph::cluster_louvain(net))
+      density.comms <- igraph::membership(igraph::cluster_louvain(net))
   }
 
   # Calculate degree of each network and check how many are
@@ -366,7 +360,7 @@ remifiedCommunities <- function(net, dat.list,
   }
 
   while(length(num.oversized) > 0) {
-    louvain.comms <- clusterLouvain(net, num.oversized, old.comms, verbose=verbose)
+    louvain.comms <- clusterLouvain(net, num.oversized, old.comms)
     num.oversized <- calculateOversizedComms(net,
                                              louvain.comms,
                                              dat.list[[1]],
@@ -388,6 +382,11 @@ remifiedCommunities <- function(net, dat.list,
   return(list(names=commnames, membership=louvain.comms))
 }
 
+
+
+
+
+
 #' Calculate graphical lasso on each community to sparsify the network
 #'
 #' @param  netlist List of LR network and table
@@ -397,13 +396,7 @@ remifiedCommunities <- function(net, dat.list,
 #' @return List of edges remaining in LR network
 #' @export
 #'
-remifiedGlasso <- function(netlist,
-                           communities,
-                           dat.list,
-                           seednum,
-                           lambda,
-                           scale=F,
-                           verbose = T) {
+remifiedGlasso <- function(netlist, communities, dat.list, seednum, lambda, scale=F) {
   set.seed(seednum)
   predicted.edges <- list()
 
@@ -434,7 +427,7 @@ remifiedGlasso <- function(netlist,
       dplyr::select(node1, node2, weight, cor, commnum, commsize, deg, numgenes, lambda)
     gedges_w <- rbind(gedges_w, lr.W)
 
-    if(verbose == T) {pbar$pause(0.01)$tick()$print()}
+    pbar$pause(0.01)$tick()$print()
   }
 
   if(length(communities$names) <= 1) {
@@ -492,7 +485,7 @@ remifiedGlasso <- function(netlist,
 
         }
       }
-      if(verbose == T) {pbar$pause(0.01)$tick()$print()}
+      pbar$pause(0.01)$tick()$print()
     }
   }
 
@@ -596,7 +589,7 @@ remi <- function(dat.list,
                  #downstreamgenes=NULL,
                  ppi.net = NULL,
                  cd = "Louvain",
-                 maxNum = NULL) {
+                 maxNum = ncol(cellexp.list$filtered[[1]])) {
 
   if(is.null(lr.database)) {lr.database = curr.lr.filt}
   #if(is.null(downstreamgenes)) {downstreamgenes = pathway.genelist}
@@ -640,11 +633,6 @@ remi <- function(dat.list,
               params=params))
 
 }
-
-
-
-
-
 
 #' Making chord diagram for REMI results
 #'
@@ -719,7 +707,7 @@ REMIPlot <- function(interactome,
                            annotationTrack = c("grid"), link.lwd = lwd_mat)
 
     if(legend == TRUE) {
-      legend("left",
+      legend("right",
              legend = names(grid.col),
              fill = grid.col,
              border=NA,
@@ -729,7 +717,7 @@ REMIPlot <- function(interactome,
 
   if(type == "alluvial") {
     p <- ggplot(df2,
-                aes(y = count, axis1 = sending, axis2 = receiving)) +
+           aes(y = count, axis1 = sending, axis2 = receiving)) +
       geom_alluvium(aes(fill = sending), width = 1/12) +
       geom_stratum(width = 1/12) +
       geom_text(stat = "stratum", aes(label = after_stat(stratum)), size=size) +
@@ -760,16 +748,15 @@ calculateSignificance <- function(obj,
                                   l.chosen,
                                   r.chosen,
                                   community.num,
-                                  maxNum = NULL,
+                                  maxNum,
                                   iterNum = 100,
                                   seednum=30,
-                                  lambda = NULL,
-                                  verbose = T) {
+                                  lambda = NULL) {
 
   # Setting Varibales
   allcellexp <- obj$lrnet$expanddata
-  node1 <- paste0(obj$interactome$sending, "_", obj$interactome$ligand)
-  node2 <- paste0(obj$interactome$receiving, "_", obj$interactome$receptor)
+  node1 <- obj$interactome$ligand
+  node2 <- obj$interactome$receptor
   commnums <- obj$interactome$commnum
   param <- obj$params
   between <- FALSE
@@ -804,7 +791,6 @@ calculateSignificance <- function(obj,
   community.mat <- t(allcellexp[which(rownames(allcellexp) %in% orig.comm.genes),])
   R <- cor(community.mat)
   S <- cov(community.mat)
-
   l.ind <- which(colnames(R) == l.chosen)
   r.ind <- which(colnames(R) == r.chosen)
 
@@ -818,7 +804,6 @@ calculateSignificance <- function(obj,
   pval.list <- c()
   T.list <- c()
   Y.list <- c()
-
   for(i in 1:iterNum) {
     set.seed(i*seednum)
 
@@ -864,40 +849,28 @@ calculateSignificance <- function(obj,
         filter(comm1 != comm2)
 
       lr.boot.genes <- unique(c(between.edges$name1, between.edges$name2))
-    } else {
-      lr.boot.genes <- names(commnums.boot[commnums.boot == l.boot.num])
-    }
+    } else { lr.boot.genes <- names(commnums.boot[commnums.boot == l.boot.num]) }
 
     comm.mat <- t(allcellexp[which(rownames(allcellexp) %in% lr.boot.genes),])
-    comm.cor <- R_star_cor_df$lr.cor[which(rownames(R_star_cor_df$lr.cor) %in%
-                                             lr.boot.genes),
-                                     which(colnames(R_star_cor_df$lr.cor) %in%
-                                             lr.boot.genes)]
+    comm.cor <- R_star_cor_df$lr.cor[which(rownames(R_star_cor_df$lr.cor) %in% lr.boot.genes),
+                                     which(colnames(R_star_cor_df$lr.cor) %in% lr.boot.genes)]
 
-    g <- calculateCommGlasso(comm.cor,
-                             comm.mat,
-                             obj$lrnet,
-                             lambda = opt.lambda,
-                             scale = F,
-                             verbose = F)$W %>%
-      dplyr::mutate(weight = if_else(abs(as.numeric(weight)) > 0, 1, 0))
+    g <- calculateCommGlasso(comm.cor, comm.mat, obj$lrnet,
+                             lambda=opt.lambda,
+                             scale=F)$W %>%
+                             dplyr::mutate(weight = if_else(abs(as.numeric(weight)) > 0, 1, 0))
 
     node.ind <- which(g$node1 == l.chosen & g$node2 == r.chosen)
-
     if(length(node.ind) == 0) {
       node.ind <- which(g$node2 == l.chosen & g$node1 == r.chosen)
     }
 
     Y_star <- g$weight[node.ind]
 
-    if(length(Y_star) == 0) {
-      Y_star <- 0
-    }
-
     T.list <- c(T.list, T_star)
     Y.list <- c(Y.list, Y_star)
 
-    if(verbose == T) {pbar$pause(0.01)$tick()$print()}
+    pbar$pause(0.01)$tick()$print()
   }
 
   D <- list(T=T.list, Y=Y.list)
@@ -922,8 +895,10 @@ calculateSignificance <- function(obj,
 #' @return Single cell REMI object that can be used by the algorithm
 #' @export
 #'
-setupSingleCell <- function(obj, sample.col,
+setupSingleCell <- function(obj,
+                            sample.col,
                             celltype.col,
+                            use.celltypes = NULL,
                             remove.markers = NULL,
                             gene.select = NULL,
                             assay="integrated",
@@ -931,10 +906,21 @@ setupSingleCell <- function(obj, sample.col,
                             thres=0,
                             expthres = 0.1) {
 
+  if(is.null(use.celltypes)) {
+    use.celltypes <- unique(obj@meta.data[,celltype.col])
+  }
+
   cat("Calculating percent expressed for ligand and receptor genes\n")
 
-  Seurat::Idents(obj) <- celltype.col
-  d <- Seurat::DotPlot(obj, features=rownames(obj))
+  lr.genes <- unique(curr.lr.filt$Ligand, curr.lr.filt$Receptor)
+
+  lr.obj <- subset(obj, features=lr.genes)
+
+  Seurat::Idents(lr.obj) <- celltype.col
+  d <- suppressWarnings(Seurat::DotPlot(lr.obj,
+                                        features=rownames(lr.obj),
+                                        assay=assay))
+
   percexp <- d$data %>%
     dplyr::filter(pct.exp > expthres) %>%
     dplyr::mutate(cell_gene = paste0(id, "_", features.plot))
@@ -943,8 +929,10 @@ setupSingleCell <- function(obj, sample.col,
 
   pseudobulk <- SingleToBulk(obj, assay, sample.col, celltype.col)
 
-  num.markers <- length(pseudobulk$cellmarkers) - length(remove.markers)
-  print(num.markers)
+  #num.markers <- length(pseudobulk$cellmarkers) - length(remove.markers)
+  num.markers <- length(use.celltypes)
+
+  cat("Number of markers\t", num.markers, "\n")
 
   filtered.cellexps <- list()
   notfiltered.cellexps <- list()
@@ -955,9 +943,11 @@ setupSingleCell <- function(obj, sample.col,
 
     curr.name <- pseudobulk$cellmarkers[i]
 
-    if(!(curr.name %in% remove.markers)) {
+    #if(!(curr.name %in% remove.markers)) {
+    if(curr.name %in% use.celltypes) {
 
       nospace.name <- as.character(gsub(" ", "", curr.name))
+      nospace.name <- gsub("+", "\\+", nospace.name, fixed=TRUE)
 
       all.cols <- unlist(lapply(colnames(pseudobulk$dat),
                                 function(x) {strsplit(x, "_")[[1]][2]}))
@@ -973,7 +963,8 @@ setupSingleCell <- function(obj, sample.col,
       colsvec <- c(colsvec, dat.cols)
 
       # Removing genes with low expression
-      removegenes <- rownames(celltype.filt)[which(rowMeans(celltype.filt) <= thres)]
+      #removegenes <- rownames(celltype.filt)[which(rowMeans(celltype.filt) <= thres)]
+      removegenes <- NULL
 
       # Finalized cleaned data matrix
       if(length(removegenes) > 0) {
@@ -1016,7 +1007,7 @@ setupSingleCell <- function(obj, sample.col,
   for(c in names(notfiltered.cellexps)) {
 
     allpresent.filt.data <- notfiltered.cellexps[[c]][,which(colnames(notfiltered.cellexps[[c]]) %in%
-                                                               allpresent.cols)]
+                                                              allpresent.cols)]
 
     if(is.null(nrow(allpresent.filt.data))) {
       cat(c, " was omitted due to lack of uniform expression.\n")
@@ -1039,7 +1030,7 @@ setupSingleCell <- function(obj, sample.col,
                                                             allpresent.cols)]
 
     if(is.null(nrow(allpresent.filt.data))) {
-      temp <- "hi"
+      temp <- NULL
     } else {
       duplicate.cols <- which(apply(allpresent.filt.data, 1,
                                     function(x) length(unique(x)) == 1) == TRUE)
@@ -1053,10 +1044,23 @@ setupSingleCell <- function(obj, sample.col,
   }
 
   if(filter == F) {
+
+    sumcol <- sum(unlist(lapply(notfiltered.cellexps, function(x) {ncol(x)})))
+    if(sumcol == 0) {
+      cat("No samples had all cell types of interest.")
+    }
+
     return(list(filtered=notfiltered.cellexps,
                 unfiltered=notfiltered.cellexps,
                 cellmarkers=setdiff(pseudobulk$cellmarkers, remove.markers)))
   } else {
+
+    sumcol <- sum(unlist(lapply(filtered.cellexps, function(x) {ncol(x)})))
+
+    if(sumcol == 0) {
+      cat("No samples had all cell types of interest.")
+    }
+
     return(list(filtered=filtered.cellexps,
                 unfiltered=notfiltered.cellexps,
                 cellmarkers=setdiff(pseudobulk$cellmarkers, remove.markers)))
@@ -1074,9 +1078,9 @@ setupSingleCell <- function(obj, sample.col,
 SingleToBulk <- function(obj, assay, samplecol, celltypecol) {
   temp.rownames <- rownames(obj@meta.data)
   obj@meta.data <- obj@meta.data %>%
-    dplyr::mutate(samplesREMI = gsub("_", "", !!as.name(samplecol))) %>%
-    dplyr::mutate(group.ctype = paste0(samplesREMI, "_" , !!as.name(celltypecol))) %>%
-    dplyr::mutate(group.ctype = as.factor(group.ctype))
+  dplyr::mutate(samplesREMI = gsub("_", "", !!as.name(samplecol))) %>%
+  dplyr::mutate(group.ctype = paste0(samplesREMI, "_" , !!as.name(celltypecol))) %>%
+  dplyr::mutate(group.ctype = as.factor(group.ctype))
   rownames(obj@meta.data) <- temp.rownames
 
   Seurat::Idents(obj) <- "group.ctype"
@@ -1095,3 +1099,4 @@ SingleToBulk <- function(obj, assay, samplecol, celltypecol) {
 
   return(list(scaleddat=avg.scaled, dat=avg.dat, cellmarkers=cellmarkers))
 }
+

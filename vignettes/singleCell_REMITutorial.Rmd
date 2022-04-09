@@ -17,6 +17,10 @@ load("../data/pathway.genelist.rda")
 load("../data/pathway.genes.rda")
 ```
 
+```{r}
+saveRDS(curr.lr.filt, file="curr.lr.filt.rds")
+```
+
 Download data from: https://figshare.com/s/871cb53e8fb5206bf8d0
 
 Dataset is from Laughney et al. Regenerative lineages and immune-mediated pruning in lung cancer metastasis (2020). Data has been integrated and scaled.

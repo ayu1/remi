@@ -49,7 +49,12 @@ cellexp.list <- setupData(dat, celltypes, 4, filter=T)
 adeno.remi <- remi(cellexp.list)
 ```
 
-
+```{r}
+pval <- calculateSignificance(remi.obj,
+                              l.chosen="F_CTGF",
+                              r.chosen="F_LRP6",
+                              comm.chosen="50")
+```
 
 
 

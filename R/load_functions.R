@@ -585,7 +585,7 @@ cleaningOutput <- function(input, netlist) {
 #' @param dat.list List of gene expression for each cell type
 #' @param labelednodes List of high eigenvector centrality receptors
 #' @param seed Random seed number to ensure reproducible results
-#' @return List of cabernet predictions
+#' @return List of remi predictions
 #' @export
 #'
 remi <- function(dat.list,
@@ -593,13 +593,14 @@ remi <- function(dat.list,
                  seed = 30,
                  lambda = NULL,
                  lr.database = NULL,
-                 #downstreamgenes=NULL,
                  ppi.net = NULL,
                  cd = "Louvain",
                  maxNum = NULL) {
 
   if(is.null(lr.database)) {lr.database = curr.lr.filt}
+  
   #if(is.null(downstreamgenes)) {downstreamgenes = pathway.genelist}
+  
   if(is.null(ppi.net)) {ppi.net = g.biogrid}
 
   # Creating LR network
@@ -619,8 +620,10 @@ remi <- function(dat.list,
 
   # Graphical Lasso
   cat("\n Estimating activated LR pairs \n")
-  glasso.output <- remifiedGlasso(netlist, commdetect.output,
-                                  dat.list$filtered, seed,
+  glasso.output <- remifiedGlasso(netlist, 
+                                  commdetect.output,
+                                  dat.list$filtered, 
+                                  seed,
                                   lambda, scale=F)
 
   predicted.edges <- cleaningOutput(glasso.output, netlist)
@@ -633,11 +636,11 @@ remi <- function(dat.list,
   params <- list()
   params[["seed"]] <- seed
 
-  return(list(lrnet=netlist,
-              unfilteredinteractome=predicted.edges$net.edges,
-              interactome=predicted.edges$filtered.net.edges,
-              communities=commdetect.output,
-              params=params))
+  return(list(lrnet = netlist,
+              unfilteredinteractome = predicted.edges$net.edges,
+              interactome = predicted.edges$filtered.net.edges,
+              communities = commdetect.output,
+              params = params))
 
 }
 

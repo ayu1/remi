@@ -1,0 +1,32 @@
+---
+title: "testingRemiCode.Rmd"
+output: html_document
+date: "2022-09-07"
+---
+
+```{r setup, include=FALSE}
+source("/Users/aliceyu/Documents/GitHub/remi/R/load_functions.R")
+source("/Users/aliceyu/Documents/GitHub/remi/R/load_subfunctions.R")
+#library(remi)
+```
+
+```{r}
+load(file='/Users/aliceyu/Downloads/u01adeno.rda')
+load(file="/Users/aliceyu/Downloads/g.biogrid.rda")
+load(file="/Users/aliceyu/Downloads/pathway.genes.rda")
+load(file="/Users/aliceyu/Downloads/pathway.genelist.rda")
+load(file="/Users/aliceyu/Downloads/curr.lr.filt.rda")
+```
+
+```{r}
+dat <- u01adeno
+
+# list of cell types user wants to analyze 
+celltypes <- c("I", "E", "F", "M")
+
+# Create REMI object
+exp.list <- setupData(dat, celltypes, 4, filter=T)
+
+# RUNNING REMI
+remi.obj <- remi(exp.list)
+```

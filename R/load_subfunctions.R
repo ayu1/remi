@@ -54,7 +54,7 @@ makePPINetwork <- function(data, filt.genes, pathgenes, c, lrmat, ppi=g.biogrid)
 #' @return Communities identified using label propagation
 #'
 findAdjacentCommEdges <- function(netlist, cgenes, comms) {
-  all_edges <- igraph::E(netlist$net)[inc(cgenes)]
+  all_edges <- igraph::E(netlist$net)[.inc(cgenes)]
   all_edges_m <- data.table::data.table(igraph::get.edges(netlist$net, all_edges)) %>%
     dplyr::mutate(name1 = igraph::V(netlist$net)$name[V1]) %>%
     dplyr::mutate(name2 = igraph::V(netlist$net)$name[V2]) %>%
@@ -112,26 +112,38 @@ clusterLabelProp <- function(net, clu, clu.labeled, labelednodes) {
 #' @param net LR network
 #' @param commnums List of communities that had a degree larger than sample size
 #' @param communities List of all communities in LR network
-#' @return Clusters identified using louvain combined with all communities
+#' @return Clusters identified using Louvain combined with all communities
 #'
 clusterLouvain <- function(net, commnums, communities, verbose=T) {
+  
+  cat("Unique(commnums)\t", unique(commnums), "\n")
+  cat("Unique(communities)\t", unique(communities), "\n")
+  
   suppressWarnings(
-    if(unique(commnums) == unique(communities)) {
-      if(verbose == T) {cat("\nAll communities are larger than sample size\n")}
+    if(length(unique(commnums)) == length(unique(communities))) {
+      if(verbose == T) { cat("\nAll communities are larger than sample size\n") }
       final.comms <- NA
     } else {
       final.comms <- communities[-which(communities %in% commnums)]
     })
+  
   for(cc in commnums) {
-    comm.net <- igraph::induced_subgraph(net,names(communities[communities==cc]))
+    
+    comm.net <- igraph::induced_subgraph(net, names(communities[communities == cc]))
     louvain.comms <- igraph::membership(igraph::cluster_louvain(comm.net))
-    suppressWarnings(if(is.na(final.comms)) {
-      final.comms <- louvain.comms
-    } else {
-      final.comms <- c(final.comms, louvain.comms+max(final.comms))
+    
+    cat("Final Comms\t", final.comms, "\n")
+    suppressWarnings(if(length(final.comms) == 1) {
+      if(is.na(final.comms)) {
+        final.comms <- louvain.comms
+      } else {
+        final.comms <- c(final.comms, louvain.comms + max(final.comms))
+      }
     })
   }
+  
   return(final.comms)
+  
 }
 
 #' Calculating the degree of each community in a network

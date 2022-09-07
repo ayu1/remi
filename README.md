@@ -1,4 +1,4 @@
-# REMI (Regularized Microenvironment Interactome)
+# REMI (REgularized Microenvironment Interactome)
 
 
 ## Description

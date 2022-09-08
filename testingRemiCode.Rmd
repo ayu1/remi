@@ -5,17 +5,25 @@ date: "2022-09-07"
 ---
 
 ```{r setup, include=FALSE}
+install.packages("devtools")
+library(devtools)
+install_github("plevritis-lab/remi")
+
 source("/Users/aliceyu/Documents/GitHub/remi/R/load_functions.R")
 source("/Users/aliceyu/Documents/GitHub/remi/R/load_subfunctions.R")
-#library(remi)
+library(remi)
 ```
 
 ```{r}
-load(file='/Users/aliceyu/Downloads/u01adeno.rda')
-load(file="/Users/aliceyu/Downloads/g.biogrid.rda")
-load(file="/Users/aliceyu/Downloads/pathway.genes.rda")
-load(file="/Users/aliceyu/Downloads/pathway.genelist.rda")
-load(file="/Users/aliceyu/Downloads/curr.lr.filt.rda")
+#load(file='/Users/aliceyu/Downloads/u01adeno.rda')
+#load(file="/Users/aliceyu/Downloads/g.biogrid.rda")
+#load(file="/Users/aliceyu/Downloads/pathway.genes.rda")
+#load(file="/Users/aliceyu/Downloads/pathway.genelist.rda")
+#load(file="/Users/aliceyu/Downloads/curr.lr.filt.rda")
+```
+
+```{r}
+data("u01adeno")
 ```
 
 ```{r}
@@ -30,3 +38,41 @@ exp.list <- setupData(dat, celltypes, 4, filter=T)
 # RUNNING REMI
 remi.obj <- remi(exp.list)
 ```
+
+# Single cell test
+```{r}
+seurat.obj <- readRDS("~/Downloads/laughneytumor_forREMI.rds")
+```
+
+```{r}
+#Cell types with few cells
+remove.celltypes <- c("MICROGLIA/MACROPHAGE", 
+                      #"NEUTROPHIL", 
+                      #"DENDRITIC (ACTIVATED)", 
+                      "IG")
+
+#Set sample.col as column listing sample IDs
+#Set celltype.col as column listing cell type category of interest
+# Filter = TRUE removes low expressed ligand and receptors from analysis
+# Threshold = expression level cut-off
+# Expthres = percent expressed per cell type cut-off
+data.obj <- setupSingleCell(seurat.obj, 
+                          sample.col = "Sample.ID",
+                          celltype.col = "CELL_TYPE",
+                          filter=T,
+                          assay="integrated",
+                          remove.markers = remove.celltypes,
+                          thres=0.75,
+                          expthres = 0.25)
+```
+
+```{r}
+remi.obj <- remi(data.obj)
+```
+
+```{r}
+head(remi.obj$interactome)
+```
+
+
+
